@@ -86,3 +86,17 @@ class SingleBackTest(object):
 tensorflow
 akshare
 ```
+
+## 6、代码使用说明
+
+本项目中包含有3个.py文件和2个.ipynb文件，其中
+
+predict.py文件用于原始股票数据的收集、处理，计算各种因子，以及利用神经网络预测未来的股价，并将相应的结果保存到.csv文件中并导出
+
+calAvg.py文件用于计算各支股票的平均值曲线信息，并将相应的结果保存到.csv文件中并导出，用于后面的回测分析
+
+backtest.py文件用于回测，通过读取处理好后的.csv文件，给出各种策略下的回测结果，并将具体的交易方式通过图形表现出来
+
+predict.ipynb记录了数据的收集、处理与预测的相关内容
+
+backtest.ipynb记录了回测分析的相关内容
