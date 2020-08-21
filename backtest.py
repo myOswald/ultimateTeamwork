@@ -2,21 +2,21 @@
 # # 回测分析
 # 经过前面的处理，我们已经得到了股票或期货的各种因子值以及下一天价格的预测值，下面的代码就是利用这些计算结果进行回测分析。
 # 
-# 回测的初始资本为100万元，回测时间为最近的一年，为了便于分析，以下所有的策略均不会出现连续买进或者连续卖出的情况，同时假设购买股票或期货的数量没有限制。
+# 回测的初始资本为100万元，回测时间为最近的一年，为了便于分析，以下所有的策略均**不会出现连续买进或者连续卖出**的情况，同时假设购买**股票或期货的数量没有限制**。
 # 
 # 这里一共给出了5种回测的方案，分别是
 # 
-# 1. 根据rsi指数制定方案。rsi的全称是相对强弱指标，通常以30和70作为判断依据。当rsi小于30时，说明股票的价格即将上涨，
+# 1. 根据**rsi指数**制定方案。rsi的全称是相对强弱指标，通常以30和70作为判断依据。当rsi小于30时，说明股票的价格即将上涨，
 # 此时对于做空而言就要进行平仓；当rsi大于70时，说明股票
 # 快要涨停了，即将开始下跌，此时对于做多而言就要进行平仓。
 # 
-# 2. 根据KDJ指数中的KD制定方案。上涨趋势中，K值小于D值，K线向上突破D线时，为买进信号。下跌趋势中，K值大于D值，K线向下跌破D线时，为卖出信号。
+# 2. 根据KDJ指数中的**KD**制定方案。上涨趋势中，K值小于D值，K线向上突破D线时，为买进信号。下跌趋势中，K值大于D值，K线向下跌破D线时，为卖出信号。
 # 
-# 3. 根据KDJ指数制定方案。当K，D，J都小于20时，适合买入；当K，D，J都大于80时，适合卖出。
+# 3. 根据**KDJ指数**制定方案。当K，D，J都小于20时，适合买入；当K，D，J都大于80时，适合卖出。
 # 
-# 4. 根据预测的股价pred制定方案。当预测到未来一天的股价即将上涨时，适合买入；当预测到未来一天的股价即将下跌时，适合卖出。
+# 4. 根据**预测的股价pred**制定方案。当预测到未来一天的股价即将上涨时，适合买入；当预测到未来一天的股价即将下跌时，适合卖出。
 # 
-# 5. 根据平均值曲线avg制定方案。当短期平均（这里取5天）超过长期平均（这里取25天）时，适合买入；当长期平均
+# 5. 根据**平均值曲线avg**制定方案。当短期平均（这里取5天）超过长期平均（这里取25天）时，适合买入；当长期平均
 # 超过短期平均时，适合卖出。
 # 
 # 每一种方案又分为做多和做空两种，做多就是先买后卖，做空就是先卖后买，这样一来就产生了10种策略，
@@ -338,8 +338,13 @@ class SingleBackTest(object):
 
 
 if __name__ == '__main__':
+    best_side = []  # 最佳做多做空方式
+    best_factor = []  # 最佳策略
+    rel_hold_days = -1  # 最佳策略下的最佳持仓天数
+    best_total_ret = -10000000  # 最佳收益
+
     for side in ('long','short'):  # 做多还是做空
-        for factor in ('rsi','KD','KDJ','pred','avg'):  # 对5种策略依次进行计算
+        for factor in ('rsi','KD','KDJ','pred','avg'):  # 对5种策略依次进行计算，注：贵州茅台要去掉pred
             data = pd.read_csv('TDKJ.csv', parse_dates=['time'])
             data = data[-365:]  # 取最近一年的数据
             list_data = data.to_dict(orient='records')
@@ -359,21 +364,29 @@ if __name__ == '__main__':
                     max_total_ret = result['total_ret']
                 hold_days += 1
 
-            # 绘制收益最大时的交易信息图
-            hold_days = best_hold_days
-            bt = SingleBackTest({'data': list_data, 'side': side, 'factor': factor, 'hold_days':hold_days})
-            result = bt.run()
-            bt.analysis_drawpic(result)
+            # 确定最佳策略及对应的持仓天数
+            if max_total_ret > best_total_ret:
+                best_total_ret = max_total_ret
+                best_side = side
+                best_factor = factor
+                rel_hold_days = best_hold_days
 
-            # 打印回测结果
-            per_record = result['per_record']
-            result.pop('time_record')
-            result.pop('data')
-            result.pop('per_record')
-            result.pop('ret_list')
-            df = pd.DataFrame(result, index=[0])
-            print(df)
-            print('-------------------这是分割线---------------------')
+    # 绘制收益最大时的交易信息图
+    bt = SingleBackTest({'data': list_data, 'side': best_side, 'factor': best_factor, 'hold_days':rel_hold_days})
+    result = bt.run()
+    bt.analysis_drawpic(result)
+
+    # 打印回测结果
+    per_record = result['per_record']
+    result.pop('time_record')
+    result.pop('data')
+    result.pop('per_record')
+    result.pop('ret_list')
+    df = pd.DataFrame(result, index=[0])
+    print(df)
+    print('-------------------这是分割线---------------------')
+
+
 
 # %% [markdown]
 # # 结果分析
